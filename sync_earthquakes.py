@@ -9,7 +9,7 @@ overwrite the existing row.
 
 Environment variables (required):
     SUPABASE_URL                 e.g. https://<ref>.supabase.co
-    SUPABASE_SERVICE_ROLE_KEY    service role key (bypasses RLS)
+    SUPABASE_SECRET_KEY          Supabase secret / service_role key (bypasses RLS)
 """
 
 import os
@@ -96,10 +96,10 @@ def transform(feature):
 
 def main():
     url = os.environ.get("SUPABASE_URL")
-    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    key = os.environ.get("SUPABASE_SECRET_KEY")
     if not url or not key:
         print(
-            "ERROR: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set.",
+            "ERROR: SUPABASE_URL and SUPABASE_SECRET_KEY must be set.",
             file=sys.stderr,
         )
         sys.exit(1)
