@@ -7,6 +7,8 @@ rows into the `earthquakes` table on Supabase. Upserting on `event_id` means
 new events are inserted while revised events (updated magnitude, alert, etc.)
 overwrite the existing row.
 
+The fetch/transform/upsert helpers here are also imported by `backfill.py`.
+
 Environment variables (required):
     SUPABASE_URL                 e.g. https://<ref>.supabase.co
     SUPABASE_SECRET_KEY          Supabase secret / service_role key (bypasses RLS)
@@ -19,12 +21,14 @@ from datetime import datetime, timedelta, timezone
 import requests
 from supabase import create_client
 
-USGS_API = "https://earthquake.usgs.gov/fdsnws/event/1/query"
+USGS_QUERY = "https://earthquake.usgs.gov/fdsnws/event/1/query"
+USGS_COUNT = "https://earthquake.usgs.gov/fdsnws/event/1/count"
 MIN_MAGNITUDE = 2.5
 DAYS_BACK = 30
 RESULT_LIMIT = 20000
 BATCH_SIZE = 500
 TABLE = "earthquakes"
+HEADERS = {"User-Agent": "usgs-earthquake-sync/1.0 (github actions)"}
 
 
 def epoch_ms_to_iso(value):
@@ -34,32 +38,44 @@ def epoch_ms_to_iso(value):
     return datetime.fromtimestamp(value / 1000, tz=timezone.utc).isoformat()
 
 
-def fetch_earthquakes():
-    """Query the USGS API and return the list of GeoJSON features."""
-    end = datetime.now(timezone.utc)
-    start = end - timedelta(days=DAYS_BACK)
-    params = {
-        "format": "geojson",
-        "starttime": start.strftime("%Y-%m-%dT%H:%M:%S"),
-        "endtime": end.strftime("%Y-%m-%dT%H:%M:%S"),
-        "minmagnitude": MIN_MAGNITUDE,
-        "limit": RESULT_LIMIT,
+def get_client():
+    """Build a Supabase client from environment variables (exits if missing)."""
+    url = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_SECRET_KEY")
+    if not url or not key:
+        print(
+            "ERROR: SUPABASE_URL and SUPABASE_SECRET_KEY must be set.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    return create_client(url, key)
+
+
+def _usgs_params(starttime, endtime, min_magnitude):
+    return {
+        "starttime": starttime.strftime("%Y-%m-%dT%H:%M:%S"),
+        "endtime": endtime.strftime("%Y-%m-%dT%H:%M:%S"),
+        "minmagnitude": min_magnitude,
     }
-    print(
-        f"Fetching USGS earthquakes {start.date()} -> {end.date()} "
-        f"(min magnitude {MIN_MAGNITUDE}, limit {RESULT_LIMIT})...",
-        flush=True,
-    )
-    resp = requests.get(
-        USGS_API,
-        params=params,
-        headers={"User-Agent": "usgs-earthquake-sync/1.0 (github actions)"},
-        timeout=120,
-    )
+
+
+def count_events(starttime, endtime, min_magnitude=MIN_MAGNITUDE):
+    """Return how many events match a window, via the USGS count endpoint."""
+    params = _usgs_params(starttime, endtime, min_magnitude)
+    params["format"] = "text"
+    resp = requests.get(USGS_COUNT, params=params, headers=HEADERS, timeout=60)
     resp.raise_for_status()
-    features = resp.json().get("features", [])
-    print(f"USGS returned {len(features)} features.", flush=True)
-    return features
+    return int(resp.text.strip())
+
+
+def fetch_features(starttime, endtime, min_magnitude=MIN_MAGNITUDE, limit=RESULT_LIMIT):
+    """Query the USGS API for a time window and return the GeoJSON features."""
+    params = _usgs_params(starttime, endtime, min_magnitude)
+    params["format"] = "geojson"
+    params["limit"] = limit
+    resp = requests.get(USGS_QUERY, params=params, headers=HEADERS, timeout=120)
+    resp.raise_for_status()
+    return resp.json().get("features", [])
 
 
 def transform(feature):
@@ -94,34 +110,38 @@ def transform(feature):
     }
 
 
-def main():
-    url = os.environ.get("SUPABASE_URL")
-    key = os.environ.get("SUPABASE_SECRET_KEY")
-    if not url or not key:
-        print(
-            "ERROR: SUPABASE_URL and SUPABASE_SECRET_KEY must be set.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+def upsert_rows(client, rows, batch_size=BATCH_SIZE, verbose=True):
+    """Upsert rows into the earthquakes table in batches; returns count written.
 
-    client = create_client(url, key)
-
-    features = fetch_earthquakes()
-    rows = [transform(f) for f in features if f.get("id")]
-
-    # USGS can occasionally return the same id twice; keep the last occurrence
-    # so the batch upsert doesn't hit a duplicate-key conflict within one call.
-    deduped = {row["event_id"]: row for row in rows}
+    De-duplicates on event_id within the call so a single batch can't hit a
+    duplicate-key conflict. Existing event_ids are overwritten (ON CONFLICT).
+    """
+    deduped = {row["event_id"]: row for row in rows if row.get("event_id")}
     rows = list(deduped.values())
-    print(f"Prepared {len(rows)} unique rows for upsert.", flush=True)
-
     total = 0
-    for i in range(0, len(rows), BATCH_SIZE):
-        batch = rows[i:i + BATCH_SIZE]
+    for i in range(0, len(rows), batch_size):
+        batch = rows[i:i + batch_size]
         client.table(TABLE).upsert(batch, on_conflict="event_id").execute()
         total += len(batch)
-        print(f"  Upserted {total}/{len(rows)} rows...", flush=True)
+        if verbose:
+            print(f"  Upserted {total}/{len(rows)} rows...", flush=True)
+    return total
 
+
+def main():
+    client = get_client()
+    end = datetime.now(timezone.utc)
+    start = end - timedelta(days=DAYS_BACK)
+    print(
+        f"Fetching USGS earthquakes {start.date()} -> {end.date()} "
+        f"(min magnitude {MIN_MAGNITUDE}, limit {RESULT_LIMIT})...",
+        flush=True,
+    )
+    features = fetch_features(start, end)
+    print(f"USGS returned {len(features)} features.", flush=True)
+    rows = [transform(f) for f in features]
+    print(f"Prepared {len(rows)} rows for upsert.", flush=True)
+    total = upsert_rows(client, rows)
     print(f"Done. Upserted {total} earthquake records into '{TABLE}'.", flush=True)
 
 

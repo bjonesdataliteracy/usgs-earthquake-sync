@@ -1,0 +1,38 @@
+name: Backfill USGS Earthquakes
+
+# Manual, one-off historical load. Run from the Actions tab ("Run workflow").
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "Backfill start date (YYYY-MM-DD)"
+        required: true
+        default: "2025-01-01"
+      min_magnitude:
+        description: "Minimum magnitude"
+        required: true
+        default: "2.5"
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run backfill
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          START_DATE: ${{ inputs.start_date }}
+          MIN_MAGNITUDE: ${{ inputs.min_magnitude }}
+        run: python backfill.py
