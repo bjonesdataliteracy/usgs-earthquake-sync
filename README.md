@@ -44,9 +44,9 @@ In **Settings → Secrets and variables → Actions**, add:
 | Secret | Value |
 | --- | --- |
 | `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Project **service role** key (Settings → API) |
+| `SUPABASE_SECRET_KEY` | Project **secret** / `service_role` key (Settings → API Keys) |
 
-The service role key bypasses Row Level Security so the workflow can write. It is
+The secret key bypasses Row Level Security so the workflow can write. It is
 only ever stored as a GitHub Actions secret — never commit it to the repo.
 
 ### 3. Run it
@@ -57,7 +57,7 @@ for the next hourly run. To run locally instead:
 ```bash
 pip install -r requirements.txt
 export SUPABASE_URL="https://<project-ref>.supabase.co"
-export SUPABASE_SERVICE_ROLE_KEY="<service-role-key>"
+export SUPABASE_SECRET_KEY="<secret-key>"
 python sync_earthquakes.py
 ```
 
