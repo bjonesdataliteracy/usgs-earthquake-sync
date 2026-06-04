@@ -8,7 +8,7 @@
 ## PRE-RECORDING CHECKLIST
 - [ ] Hex account logged in, clean workspace visible
 - [ ] "Supabase - USGS Earthquakes" data connection verified (run a quick test query)
-- [ ] `pydeck` and `scikit-learn` added to the workspace's Python package list (geopy is pip-installed live in Step 4)
+- [ ] **Cell 0** added as the first cell: `!uv pip install pydeck scikit-learn geopy` — run it during setup so the kernel is warm, then collapse/hide it (this workspace uses uv-based package management; there is no "add package" button)
 - [ ] No existing earthquake project visible (archive your prototype before recording)
 - [ ] Browser zoomed to ~125% for screen readability
 - [ ] Notifications silenced
@@ -22,6 +22,11 @@
 **[TALKING POINT]**
 > "I've got a Postgres database in Supabase that's being refreshed every hour with live earthquake data from the US Geological Survey. Magnitude 2.5 and above, worldwide. Let me show you how fast we can go from a database connection to real insights."
 **[ACTION]** Create a new Hex project. Name it "Earthquake Explorer".
+**[SETUP — do this before recording, then collapse the cell]** Make the very first cell a package install. This workspace installs Python packages via uv (no "add package" button), so this is how `pydeck` and `scikit-learn` get in:
+```python
+!uv pip install pydeck scikit-learn geopy
+```
+Run it once during setup so the kernel is warm and uv has cached the downloads. Keep it as the **top cell** (Run All executes it first, before any imports) and collapse it so it stays out of the shot. On a cold kernel it re-runs in seconds thanks to the uv cache. (You can leave `geopy` out here if you'd rather install it live in Step 4 as a teaching beat — see note there.)
 **[ACTION]** Add a **SQL cell**. In the connection dropdown, select **"Supabase - USGS Earthquakes"**.
 **[TALKING POINT]**
 > "This is how most enterprise teams work — you've got a data warehouse or a Postgres database, and you need to connect to it and start exploring. Hex makes this dead simple. I'll select my Supabase connection, and now I can write SQL directly against my earthquake table."
@@ -107,10 +112,9 @@ Using the `earthquakes` dataframe, create 3 visualizations with markdown headers
 ### Step 4: Install the Geocoding Library (10:00–11:00)
 **[TALKING POINT]**
 > "Here's what I want to build: an app where anyone can type in their city and see the closest recent earthquakes on a map. To do that, I need to convert a city name into coordinates — that's called geocoding. Let me install a library for that."
-**[ACTION]** Add a Python cell:
+**[ACTION]** Add a Python cell (this is the live "watch me add a capability" beat — skip it if you already installed geopy in the Cell 0 setup):
 ```python
-import subprocess, sys
-subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "geopy"])
+!uv pip install geopy
 ```
 **[ACTION]** Run the cell.
 > "Now I've got `geopy` available. I could write the proximity logic myself, but why would I when I can ask the agent?"
@@ -275,8 +279,8 @@ Compare earthquake activity near Seattle to what it looks like near San Francisc
 ---
 ## BACKUP PROMPTS — IF THINGS GO SIDEWAYS
 If the SQL cell doesn't connect, verify the connection name "Supabase - USGS Earthquakes" in the dropdown. If the table is empty, check that the GitHub Actions sync has run at least once.
-If the pydeck map doesn't render, make sure `pydeck` is in the project's package list (Hex project settings → Packages). Also verify the last line of the cell is just `deck` with no print() wrapping it.
-If the K-means clustering errors with `ModuleNotFoundError: sklearn`, add `scikit-learn` to the project packages (Hex project settings → Packages). The Threads agent will fall back to a pure-numpy K-means automatically, but a notebook cell won't — so install it ahead of time. If the cluster map looks wrong (the Pacific gets split down the dateline), tell the agent: "Convert lat/lon to 3D unit-sphere coordinates before clustering so the antimeridian doesn't split clusters."
+If the pydeck map doesn't render, make sure the Cell 0 `!uv pip install pydeck ...` cell has run (re-run it, then Run All). Also verify the last line of the cell is just `deck` with no print() wrapping it.
+If the K-means clustering errors with `ModuleNotFoundError: sklearn` (or pydeck/geopy aren't found), it means the Cell 0 install didn't run before the import. Re-run the top `!uv pip install pydeck scikit-learn geopy` cell, then Run All — this workspace has no "add package" button; uv-in-the-first-cell is the only install path. The Threads agent will fall back to a pure-numpy K-means automatically, but a notebook cell won't — so make sure that first cell has executed. If the cluster map looks wrong (the Pacific gets split down the dateline), tell the agent: "Convert lat/lon to 3D unit-sphere coordinates before clustering so the antimeridian doesn't split clusters."
 If Threads gives a weak answer on the first question, try:
 ```
 Query the earthquakes table for the 10 largest earthquakes by magnitude. Show title, magnitude, depth_km, place, and event_time.
