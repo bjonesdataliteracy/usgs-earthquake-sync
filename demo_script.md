@@ -8,7 +8,7 @@
 ## PRE-RECORDING CHECKLIST
 - [ ] Hex account logged in, clean workspace visible
 - [ ] "Supabase - USGS Earthquakes" data connection verified (run a quick test query)
-- [ ] `pydeck` added to the workspace's Python package list
+- [ ] `pydeck` and `scikit-learn` added to the workspace's Python package list (geopy is pip-installed live in Step 4)
 - [ ] No existing earthquake project visible (archive your prototype before recording)
 - [ ] Browser zoomed to ~125% for screen readability
 - [ ] Notifications silenced
@@ -91,14 +91,14 @@ deck
 ```
 Using the `earthquakes` dataframe, create 3 visualizations with markdown headers before each one:
 1. A histogram of earthquake magnitudes — what's the distribution?
-2. A scatter plot of depth vs. magnitude with a color scale — is there a relationship?
+2. Group the earthquakes into 6 geographic clusters using K-means on their latitude/longitude, then plot every quake on a map (or a lon-vs-lat scatter) colored by cluster — which tectonic regions emerge? Convert lat/lon to 3D unit-sphere coordinates before clustering so the dateline doesn't split the Pacific.
 3. A time series showing daily earthquake counts — are quakes becoming more or less frequent?
 ```
 **[WAIT — let the agent create multiple cells]**
 **[TALKING POINT — while agent works]**
 > "The Notebook Agent isn't just generating a single code snippet. It's building multiple cells — the charts, the markdown narrative, the data transformations — and it understands the flow of the notebook. It knows that `earthquakes` is a dataframe from my SQL cell above."
 **[AFTER CELLS ARE CREATED, scroll through them]**
-> "In about 30 seconds, I've got a complete exploratory analysis — distribution, correlations, time trends — with narrative text explaining each one. Now let's build something people can actually use."
+> "In about 30 seconds, I've got a complete exploratory analysis — distribution, geographic clusters, time trends — with narrative text explaining each one. Look at that clustering map: the agent found the Ring of Fire, the Andes, the Mediterranean belt — the planet's tectonic boundaries — without me labeling a single point. Now let's build something people can actually use."
 ---
 ## ACT 2: "BUILD SOMETHING REAL" — THE PROXIMITY FINDER
 **Duration:** ~10 minutes
@@ -128,6 +128,41 @@ Build an earthquake proximity finder. Create these cells:
 **[WAIT — agent builds all cells]**
 **[TALKING POINT — while agent works]**
 > "I just described what I want in plain English, and the agent is building input parameters, geocoding logic, distance calculations, an interactive map, and a data table. This would normally take an experienced developer 30 to 45 minutes. Let's see how it does."
+**[KNOWN-GOOD PROXIMITY CELL — from the "Earthquake Proximity Finder" project]**
+If the agent's version misbehaves on camera, paste this proven cell (label it "Compute nearest quakes"). It geocodes the city with Nominatim and computes great-circle distance to every quake with a vectorized haversine:
+```python
+import numpy as np
+from geopy.geocoders import Nominatim
+from geopy.distance import geodesic
+
+geolocator = Nominatim(user_agent="hex-earthquake-proximity")
+location = geolocator.geocode(city_name)
+city_lat, city_lon = location.latitude, location.longitude
+
+filtered = earthquakes.copy()
+if date_range_start is not None:
+    filtered = filtered[filtered["date"] >= pd.Timestamp(date_range_start)]
+if date_range_end is not None:
+    filtered = filtered[filtered["date"] < pd.Timestamp(date_range_end) + pd.Timedelta(days=1)]
+
+lat1 = np.radians(city_lat)
+lon1 = np.radians(city_lon)
+lat2 = np.radians(filtered["latitude"].to_numpy())
+lon2 = np.radians(filtered["longitude"].to_numpy())
+dlat = lat2 - lat1
+dlon = lon2 - lon1
+a = np.sin(dlat / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
+filtered = filtered.assign(distance_miles=2 * 3958.7613 * np.arcsin(np.sqrt(a)))
+
+nearest_quakes = (
+    filtered.sort_values("distance_miles")
+    .head(int(num_results))
+    [["title", "magnitude", "depth_km", "distance_miles", "latitude", "longitude", "date", "place"]]
+    .reset_index(drop=True)
+)
+nearest_quakes
+```
+> **⚠️ Column note:** this cell expects a datetime **`date`** column, but the Step 1 SQL outputs `event_time`. Reconcile one of two ways before running: (a) add `event_time as date` to the SQL `select`, or (b) add one prep line first — `earthquakes["date"] = pd.to_datetime(earthquakes["event_time"])`. Without this, the date-range filter throws a `KeyError: 'date'`.
 **[AFTER CELLS ARE CREATED, RUN ALL]**
 **[TALKING POINT]**
 > "Let me change the city to somewhere fun..."
@@ -156,7 +191,7 @@ Build an earthquake proximity finder. Create these cells:
 - Top row: city_name input, num_results slider, date range
 - Center: the pydeck proximity map (make it large)
 - Bottom: the nearest_quakes table
-- Optionally: also include the global pydeck map from Step 2 as a second view
+- Optionally: also include the cluster-colored map from Step 3 as a second "global view" tab
 **[ALTERNATIVELY — use the Notebook Agent]**
 **[PROMPT FOR NOTEBOOK AGENT]**
 ```
@@ -165,7 +200,7 @@ Add the city_name input, num_results input, date range inputs, the earthquake pr
 **[TALKING POINT]**
 > "I can drag and drop manually, or I can ask the agent to configure the app layout for me."
 **[ACTION]** Click **Publish**. Show the clean, shareable URL.
-> "That's it. This is now a live, shareable application. Anyone with the link can type in their city and see the nearest earthquakes. No code visible, no login required — just a clean interactive experience."
+> "And there's the exclamation point: a live, shareable app that answers one irresistibly personal question — *what are the biggest earthquakes near MY city?* Type in any city on Earth and it geocodes it, measures the distance to every recent quake, and drops the closest ones on the map. No code visible, no login required — just type a city and explore."
 ---
 ### Step 8: Threads — Conversational Exploration (20:00–24:00)
 **[TALKING POINT]**
@@ -192,16 +227,17 @@ Show me the monthly trend of magnitude 5+ earthquakes. Is earthquake frequency i
 **[AFTER RESULT]**
 **[PROMPT TO TYPE]**
 ```
-Is there a statistical correlation between earthquake depth and magnitude? Run a correlation analysis and show me a scatter plot with a trend line.
+Group these earthquakes into 6 geographic clusters using K-means on their coordinates, then plot them on a map with each cluster in a different color. Which cluster has the highest average magnitude?
 ```
 **[TALKING POINT]**
-> "Watch what just happened — the agent switched from SQL to Python on its own. It decided that SQL wasn't the right tool for a correlation analysis, so it used pandas and matplotlib instead. It chose the right tool for the job without me telling it to. That's the difference between a chatbot and an agent."
+> "Watch what just happened — the agent switched from SQL to Python on its own. It decided SQL wasn't the right tool for clustering, so it reached for K-means and built the colored map in Python. It chose the right tool for the job without me telling it to. That's the difference between a chatbot and an agent."
+> "(Live riff, if you want it: the Andes / South America cluster usually comes out with the highest average magnitude — around 4.5 — while the Tonga–Fiji subduction zone has the deepest quakes on Earth, over 180 km on average.)"
 **[PROMPT TO TYPE]**
 ```
-Cluster these earthquakes by geographic region using k-means and show me the distribution of magnitudes within each cluster.
+For each cluster, show the distribution of magnitudes and tell me which region is the most seismically active.
 ```
 **[TALKING POINT]**
-> "We just went from 'show me a bar chart' to unsupervised machine learning in a single conversation. No imports, no environment setup — just questions and answers. Now let me show you one more thing."
+> "We just went from 'show me a bar chart' to unsupervised machine learning — colored clusters on a world map and a per-region magnitude breakdown — in a single conversation. No imports, no environment setup — just questions and answers. Now let me show you one more thing."
 ---
 ### Step 9: Chat with Your Published App (24:00–27:00)
 **[TALKING POINT]**
@@ -240,15 +276,16 @@ Compare earthquake activity near Seattle to what it looks like near San Francisc
 ## BACKUP PROMPTS — IF THINGS GO SIDEWAYS
 If the SQL cell doesn't connect, verify the connection name "Supabase - USGS Earthquakes" in the dropdown. If the table is empty, check that the GitHub Actions sync has run at least once.
 If the pydeck map doesn't render, make sure `pydeck` is in the project's package list (Hex project settings → Packages). Also verify the last line of the cell is just `deck` with no print() wrapping it.
+If the K-means clustering errors with `ModuleNotFoundError: sklearn`, add `scikit-learn` to the project packages (Hex project settings → Packages). The Threads agent will fall back to a pure-numpy K-means automatically, but a notebook cell won't — so install it ahead of time. If the cluster map looks wrong (the Pacific gets split down the dateline), tell the agent: "Convert lat/lon to 3D unit-sphere coordinates before clustering so the antimeridian doesn't split clusters."
 If Threads gives a weak answer on the first question, try:
 ```
 Query the earthquakes table for the 10 largest earthquakes by magnitude. Show title, magnitude, depth_km, place, and event_time.
 ```
-If the correlation scatter plot doesn't look interesting, pivot to:
+If the clustering result looks uninteresting or you need a quick filler, pivot to:
 ```
 Show me earthquake frequency by hour of the day — are earthquakes more common at certain times?
 ```
-If geocoding fails on a city name, have these fallback coordinates ready:
+If geocoding fails on a city name, it's usually the Nominatim service (geopy) being rate-limited or blocked by network egress — retry once, then fall back to hardcoding these coordinates:
 - Seattle: 47.6062, -122.3321
 - Tokyo: 35.6762, 139.6503
 - Los Angeles: 34.0522, -118.2437
@@ -275,7 +312,7 @@ If the Notebook Agent creates broken code, don't panic — use it as the "Fix wi
 ## PRODUCTION NOTES
 **Pacing:** Act 1 should feel fast and visual — database to map in under 3 minutes. Act 2 is where you slow down and teach. Act 3 builds to the Threads and Chat with App wow moments. Don't cut or speed up the agent's work — the audience watching it think and build in real time IS the content.
 **Tone:** Channel your Fred Rogers energy. You're not selling — you're showing something genuinely cool and letting the audience decide. "Watch this" is more powerful than "this is amazing."
-**The pydeck map is your thumbnail.** When you export/screenshot the video, use the dark-basemap global earthquake map. It's visually striking and immediately communicates what the video is about.
+**The pydeck map is your thumbnail.** When you export/screenshot the video, use the dark-basemap global earthquake map — or, even better, the K-means cluster-colored version where each tectonic region pops in its own color. Both are visually striking and immediately communicate what the video is about.
 **If you run long:** Cut Step 6 (Fix with Agent) — it's nice but not essential. You can also trim the Threads section (Step 8) to 2–3 prompts instead of 5.
 **If you run short:** Add an Explore cell demo between Steps 3 and 4 — show the no-code drag-and-drop charting interface as the "middle ground" between SQL/Python and AI.
 **SQL cell output name:** Double-check that the SQL cell's output DataFrame is named `earthquakes` (not the default `dataframe_1` or similar). Both the pydeck cell and the Notebook Agent prompts reference it by that name.
