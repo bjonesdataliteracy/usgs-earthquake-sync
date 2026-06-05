@@ -93,18 +93,37 @@ deck
 **[TALKING POINT]**
 > "Now here's where it gets fun. Instead of writing more code myself, I'm going to describe what I want in plain English and let the Notebook Agent build it for me. Watch."
 **[ACTION]** Open the Notebook Agent (CMD+K or the agent icon). Type:
-**[PROMPT FOR NOTEBOOK AGENT]**
+**[PROMPTS FOR NOTEBOOK AGENT — paste these ONE AT A TIME, letting each finish before the next]**
+
+**Prompt 1 — magnitude histogram**
 ```
-Using the `earthquakes` dataframe, create 3 visualizations with markdown headers before each one:
-1. A histogram of earthquake magnitudes — what's the distribution?
-1b. Change the binning for magnitude on the x-axis of the histogram to step size of 0.5
-2. A time series showing daily earthquake counts — are quakes becoming more or less frequent?
-2b. What happened on April 2, 2026? "I'd like to drill down on April 2, 2026. That seems like a huge outlier. Can you give me a list of all of the earthquakes from that day, and show them to me on a map or lat/long scatterplot?"
-3. Group the earthquakes into 6 geographic clusters using K-means on their latitude/longitude, then plot every quake on a map (or a lon-vs-lat scatter) colored by cluster — which tectonic regions emerge? Convert lat/lon to 3D unit-sphere coordinates before clustering so the dateline doesn't split the Pacific.
-3b. "Can you create a map colored by cluster using the pydeck package in python?"
-3c. "Can you now give me a bar chart of earthquake count by cluster group from the earthquakes dataframe? Make sure to use the same colors for the bars as you used for the dots on the map."
+Using the `earthquakes` dataframe, create a histogram of earthquake magnitudes with a markdown header above it. What's the distribution?
 ```
-**[WAIT — let the agent create multiple cells]**
+**Prompt 1b — refine the bins**
+```
+Change the binning for magnitude on the x-axis of the histogram to a step size of 0.5.
+```
+**Prompt 2 — daily time series**
+```
+Using the `earthquakes` dataframe, create a time series showing daily earthquake counts with a markdown header above it. Are quakes becoming more or less frequent?
+```
+**Prompt 2b — drill into the outlier**
+```
+I'd like to drill down on April 2, 2026 — that seems like a huge outlier. Give me a list of all the earthquakes from that day, and show them to me on a map or lat/long scatterplot.
+```
+**Prompt 3 — K-means clusters**
+```
+Group the earthquakes into 6 geographic clusters using K-means on their latitude/longitude. Convert lat/lon to 3D unit-sphere coordinates before clustering so the dateline doesn't split the Pacific. Add the cluster label back onto the `earthquakes` dataframe.
+```
+**Prompt 3b — color the map by cluster**
+```
+Can you create a map colored by cluster using the pydeck package in Python?
+```
+**Prompt 3c — matching bar chart**
+```
+Can you now give me a bar chart of earthquake count by cluster group from the `earthquakes` dataframe? Make sure to use the same colors for the bars as you used for the dots on the map.
+```
+**[WAIT — let each prompt finish before pasting the next]**
 **[TALKING POINT — while agent works]**
 > "The Notebook Agent isn't just generating a single code snippet. It's building multiple cells — the charts, the markdown narrative, the data transformations — and it understands the flow of the notebook. It knows that `earthquakes` is a dataframe from my SQL cell above."
 **[AFTER CELLS ARE CREATED, scroll through them]**
@@ -126,15 +145,25 @@ Using the `earthquakes` dataframe, create 3 visualizations with markdown headers
 ---
 ### Step 5: Notebook Agent Builds the Proximity Finder (11:00–15:00)
 **[ACTION]** Open the Notebook Agent. Type:
-**[PROMPT FOR NOTEBOOK AGENT]**
+**[PROMPTS FOR NOTEBOOK AGENT — paste these ONE AT A TIME, letting each finish before the next]**
+
+**Prompt 1 — input parameters**
 ```
-Build an earthquake proximity finder. Create these cells:
-1. Three input parameters: a text input called `city_name` (default "Seattle, WA"), a numeric input called `num_results` (default 25), and a date range input for start and end dates.
-2. A Python cell that uses geopy (already installed) to geocode the city name to lat/long, then calculates the geodesic distance from that city to every earthquake in the `earthquakes` dataframe. Return a dataframe called `nearest_quakes` sorted by distance (closest first), limited to the top X results. Include columns: title, magnitude, depth_km, distance_miles, latitude, longitude, event_time, place.
-3. A pydeck map (dark CARTO basemap, no Mapbox token) centered on the user's city, showing a blue marker for the city and circle markers for each nearby earthquake — sized and colored by magnitude.
-4. A clean table displaying `nearest_quakes`.
+Build the start of an earthquake proximity finder. Create three input parameters: a text input called `city_name` (default "Seattle, WA"), a numeric input called `num_results` (default 25), and a date range input for start and end dates.
 ```
-**[WAIT — agent builds all cells]**
+**Prompt 2 — geocode + distance**
+```
+Add a Python cell that uses geopy (already installed) to geocode `city_name` to lat/long, then calculates the geodesic distance from that city to every earthquake in the `earthquakes` dataframe. Return a dataframe called `nearest_quakes` sorted by distance (closest first), limited to the top `num_results`. Include columns: title, magnitude, depth_km, distance_miles, latitude, longitude, event_time, place.
+```
+**Prompt 3 — proximity map**
+```
+Add a pydeck map (dark CARTO basemap, no Mapbox token) centered on the user's city, showing a blue marker for the city and circle markers for each nearby earthquake — sized and colored by magnitude.
+```
+**Prompt 4 — results table**
+```
+Add a clean table displaying `nearest_quakes`.
+```
+**[WAIT — let each prompt finish before pasting the next]**
 **[TALKING POINT — while agent works]**
 > "I just described what I want in plain English, and the agent is building input parameters, geocoding logic, distance calculations, an interactive map, and a data table. This would normally take an experienced developer 30 to 45 minutes. Let's see how it does."
 **[KNOWN-GOOD PROXIMITY CELL — from the "Earthquake Proximity Finder" project]**
