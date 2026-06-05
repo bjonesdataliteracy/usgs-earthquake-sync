@@ -151,9 +151,6 @@ Can you now give me a bar chart of earthquake count by cluster group from the `e
 ```
 Build the start of an earthquake proximity finder. Create three input parameters: a text input called `city_name` (default "Seattle, WA"), a numeric input called `num_results` (default 25), and a date range input for start and end dates.
 ```
-```
-Turn my notebook into a nice Earthquake Proximity Finder - user enters a city, radius, and date range, and the app returns a list of close earthquakes in the pydeck map and gives a formatted table of the earthquakes.
-```
 
 **Prompt 2 — geocode + distance**
 ```
@@ -227,6 +224,9 @@ nearest_quakes
 **[TALKING POINT]**
 > "Everything I've built so far lives in a notebook — great for building, but I want to share this with people who don't want to see any code. Let's turn it into a clean, interactive app."
 **[ACTION]** Switch to the **App Builder** view (the layout/app tab).
+```
+Turn my notebook into a nice Earthquake Proximity Finder - user enters a city, radius, and date range, and the app returns a list of close earthquakes in the pydeck map and gives a formatted table of the earthquakes.
+```
 **[TALKING POINT]**
 > "In the app view, I drag cells into a layout. Inputs at the top, the map front and center, the data table below."
 **[ACTION]** Arrange the layout:
