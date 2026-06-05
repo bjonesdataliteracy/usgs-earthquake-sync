@@ -29,6 +29,7 @@ without manual intervention.
 | `sync_earthquakes.py` | Fetch → transform → upsert script |
 | `requirements.txt` | Python dependencies (`requests`, `supabase`) |
 | `.github/workflows/sync.yml` | Hourly GitHub Actions workflow |
+| `demo_script.md` | Hex tutorial video script — builds a live earthquake app (SQL → pydeck map → AI agent → published app) on this data |
 
 ## Setup
 
