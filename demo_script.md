@@ -151,6 +151,10 @@ Can you now give me a bar chart of earthquake count by cluster group from the `e
 ```
 Build the start of an earthquake proximity finder. Create three input parameters: a text input called `city_name` (default "Seattle, WA"), a numeric input called `num_results` (default 25), and a date range input for start and end dates.
 ```
+```
+Turn my notebook into a nice Earthquake Proximity Finder - user enters a city, radius, and date range, and the app returns a list of close earthquakes in the pydeck map and gives a formatted table of the earthquakes.
+```
+
 **Prompt 2 — geocode + distance**
 ```
 Add a Python cell that uses geopy (already installed) to geocode `city_name` to lat/long, then calculates the geodesic distance from that city to every earthquake in the `earthquakes` dataframe. Return a dataframe called `nearest_quakes` sorted by distance (closest first), limited to the top `num_results`. Include columns: title, magnitude, depth_km, distance_miles, latitude, longitude, event_time, place.
