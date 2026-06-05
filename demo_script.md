@@ -8,6 +8,7 @@
 ## PRE-RECORDING CHECKLIST
 - [ ] Hex account logged in, clean workspace visible
 - [ ] "Supabase - USGS Earthquakes" data connection verified (run a quick test query)
+- [ ] **Chat with App** confirmed available — open the published app and check for the interlocking-circles icon in the lower-right corner (requires an Explorer role or higher + "Can Explore" permission)
 - [ ] **Cell 0** added as the first cell: `!uv pip install pydeck scikit-learn geopy` — run it during setup so the kernel is warm, then collapse/hide it (this workspace uses uv-based package management; there is no "add package" button)
 - [ ] No existing earthquake project visible (archive your prototype before recording)
 - [ ] Browser zoomed to ~125% for screen readability
@@ -83,7 +84,7 @@ deck
 ```
 **[ACTION]** Run the cell. Give the audience a moment to take in the map.
 **[TALKING POINT]**
-> "Now we're looking at every significant earthquake on Earth over the past year and a half — on a dark basemap, sized and colored by magnitude. You can see the Ring of Fire wrapping around the Pacific. Those big red and magenta dots? Those are the major events. Hover over any one and you get the details."
+> "Now we're looking at every significant earthquake on Earth from the past 90 days — on a dark basemap, sized and colored by magnitude. You can see the Ring of Fire wrapping around the Pacific. Those big red and magenta dots? Those are the major events. Hover over any one and you get the details."
 **[ACTION]** Hover over a few dots — show the tooltip with magnitude, depth, location, and date.
 > "Two cells. One SQL query, one Python visualization. Database to map in about 90 seconds. But I didn't come here to write code — I came here to show you what the AI can do. Let's hand the wheel over to the Notebook Agent."
 **[TALKING POINT — point out Typeahead if you typed any of the Python manually]**
@@ -284,7 +285,7 @@ For each cluster, show the distribution of magnitudes and tell me which region i
 ### Step 9: Chat with Your Published App (24:00–27:00)
 **[TALKING POINT]**
 > "This is the feature that really sets Hex apart. Remember that app we published? Watch this."
-**[ACTION]** Navigate back to the published app. Click **"Chat with App"**.
+**[ACTION]** Navigate back to the published app. Click the **interlocking-circles chat icon in the lower-right corner** to open Chat with App — there's no button literally labeled "Chat with App," and the icon sits in the very bottom-right of the app window.
 **[PROMPT TO TYPE IN CHAT WITH APP]**
 ```
 Summarize the key findings from this earthquake proximity analysis for Seattle.
