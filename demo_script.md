@@ -37,6 +37,7 @@ select event_id, title, place, magnitude, depth_km,
 from public.earthquakes
 where latitude is not null
   and longitude is not null
+  and event_time >= now() - interval '90 days'
 order by magnitude desc nulls first   -- draw the big ones on top
 ```
 **[ACTION]** Run the cell.
@@ -96,8 +97,11 @@ deck
 ```
 Using the `earthquakes` dataframe, create 3 visualizations with markdown headers before each one:
 1. A histogram of earthquake magnitudes — what's the distribution?
-2. Group the earthquakes into 6 geographic clusters using K-means on their latitude/longitude, then plot every quake on a map (or a lon-vs-lat scatter) colored by cluster — which tectonic regions emerge? Convert lat/lon to 3D unit-sphere coordinates before clustering so the dateline doesn't split the Pacific.
-3. A time series showing daily earthquake counts — are quakes becoming more or less frequent?
+1b. Change the binning for magnitude on the x-axis of the histogram to step size of 0.5
+2. A time series showing daily earthquake counts — are quakes becoming more or less frequent?
+2b. What happened on April 2, 2026? "I'd like to drill down on April 2, 2026. That seems like a huge outlier. Can you give me a list of all of the earthquakes from that day, and show them to me on a map or lat/long scatterplot?"
+3. Group the earthquakes into 6 geographic clusters using K-means on their latitude/longitude, then plot every quake on a map (or a lon-vs-lat scatter) colored by cluster — which tectonic regions emerge? Convert lat/lon to 3D unit-sphere coordinates before clustering so the dateline doesn't split the Pacific.
+3b. "Can you create a map colored by cluster using the pydeck package in python?"
 ```
 **[WAIT — let the agent create multiple cells]**
 **[TALKING POINT — while agent works]**
