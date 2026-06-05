@@ -305,6 +305,27 @@ Compare earthquake activity near Seattle to what it looks like near San Francisc
 **[TALKING POINT]**
 > "That question went beyond what's displayed on screen. The agent used the app's underlying logic — the database connection, the distance calculation — to go get new data and answer a question I never explicitly built the app to answer. This isn't a static dashboard. It's a living, conversational experience."
 ---
+### BONUS (optional, ~2–3 min): Drive Hex from Claude Code — the Hex Connector (MCP)
+**[WHEN TO USE]** A flourish for a technical / AI-savvy audience. It's fully optional — if you're running long, skip it; the closeout doesn't depend on it.
+**[TALKING POINT]**
+> "One more thing — everything we just did *inside* Hex, you can also drive from *outside* it. Hex has a connector for Claude built on MCP, so an AI assistant like Claude Code, Claude Desktop, or Cursor can reach right into your Hex workspace — search your projects and run analyses — without you ever opening Hex."
+**[SETUP — do this once, before recording]** In Claude, go to **Settings → Connectors → Browse Connectors**, search **"Hex"**, set the server URL to `https://app.hex.tech/mcp`, and connect. (Single-tenant / EU / HIPAA customers: swap in your custom Hex URL.) The connector exposes four tools: `search_projects`, `create_thread`, `get_thread`, `continue_thread`.
+**[ACTION]** Switch to Claude (Claude Code or Desktop). Ask it to find the project:
+```
+Search my Hex projects for earthquakes.
+```
+**[TALKING POINT]**
+> "It comes back with project cards — title, description, and a link straight into Hex. There's my Earthquake Explorer, found from inside my coding assistant."
+**[ACTION]** Now ask a question that kicks off a Thread:
+```
+In my Hex workspace, what were the 10 largest earthquakes in the last 90 days, and where did they happen?
+```
+**[WAIT — an interactive widget appears in the Claude chat]**
+**[TALKING POINT — while it runs]**
+> "Watch the widget — that's the same Hex Threads agent from earlier, but running from Claude. It streams its thinking steps live, and any charts or tables it builds show up right here in the chat. When it finishes, Claude summarizes the findings and links me to the full Thread back in Hex."
+**[TALKING POINT — the meta payoff]**
+> "Fun fact: the K-means clustering analysis I showed you earlier? I had Claude run it through this exact connector while I was putting this demo together. The analysis runs on Hex's compute, against the real database connection — the AI assistant is just the steering wheel."
+---
 ### Step 10: The Closeout (27:00–29:00)
 **[TALKING POINT]**
 > "Let me take a step back and recap what we just did in under 30 minutes."
@@ -351,11 +372,12 @@ If the Notebook Agent creates broken code, don't panic — use it as the "Fix wi
 | Python in Threads | Step 8 | **Python in Threads** |
 | Talk to your dashboard | Step 9 | **Chat with App** |
 | Agent goes beyond the app | Step 9 | **Chat with App (expanded context)** |
+| Drive Hex from Claude Code / Cursor | Bonus | **Hex Connector for Claude (MCP server)** |
 ---
 ## PRODUCTION NOTES
 **Pacing:** Act 1 should feel fast and visual — database to map in under 3 minutes. Act 2 is where you slow down and teach. Act 3 builds to the Threads and Chat with App wow moments. Don't cut or speed up the agent's work — the audience watching it think and build in real time IS the content.
 **Tone:** Channel your Fred Rogers energy. You're not selling — you're showing something genuinely cool and letting the audience decide. "Watch this" is more powerful than "this is amazing."
 **The pydeck map is your thumbnail.** When you export/screenshot the video, use the dark-basemap global earthquake map — or, even better, the K-means cluster-colored version where each tectonic region pops in its own color. Both are visually striking and immediately communicate what the video is about.
-**If you run long:** Cut Step 6 (Fix with Agent) — it's nice but not essential. You can also trim the Threads section (Step 8) to 2–3 prompts instead of 5.
+**If you run long:** The BONUS Claude Connector segment is fully optional — drop it first. Then cut Step 6 (Fix with Agent) — it's nice but not essential. You can also trim the Threads section (Step 8) to 2–3 prompts instead of 5.
 **If you run short:** Add an Explore cell demo between Steps 3 and 4 — show the no-code drag-and-drop charting interface as the "middle ground" between SQL/Python and AI.
 **SQL cell output name:** Double-check that the SQL cell's output DataFrame is named `earthquakes` (not the default `dataframe_1` or similar). Both the pydeck cell and the Notebook Agent prompts reference it by that name.
