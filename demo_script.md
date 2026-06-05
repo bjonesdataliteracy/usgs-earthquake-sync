@@ -102,6 +102,7 @@ Using the `earthquakes` dataframe, create 3 visualizations with markdown headers
 2b. What happened on April 2, 2026? "I'd like to drill down on April 2, 2026. That seems like a huge outlier. Can you give me a list of all of the earthquakes from that day, and show them to me on a map or lat/long scatterplot?"
 3. Group the earthquakes into 6 geographic clusters using K-means on their latitude/longitude, then plot every quake on a map (or a lon-vs-lat scatter) colored by cluster — which tectonic regions emerge? Convert lat/lon to 3D unit-sphere coordinates before clustering so the dateline doesn't split the Pacific.
 3b. "Can you create a map colored by cluster using the pydeck package in python?"
+3c. "Can you now give me a bar chart of earthquake count by cluster group from the earthquakes dataframe? Make sure to use the same colors for the bars as you used for the dots on the map."
 ```
 **[WAIT — let the agent create multiple cells]**
 **[TALKING POINT — while agent works]**
