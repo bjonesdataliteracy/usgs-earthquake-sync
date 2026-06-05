@@ -37,7 +37,7 @@ select event_id, title, place, magnitude, depth_km,
 from public.earthquakes
 where latitude is not null
   and longitude is not null
-order by magnitude asc nulls first   -- draw the big ones on top
+order by magnitude desc nulls first   -- draw the big ones on top
 ```
 **[ACTION]** Run the cell.
 **[TALKING POINT]**
