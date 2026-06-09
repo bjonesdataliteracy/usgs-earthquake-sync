@@ -1,5 +1,5 @@
 # Hex Tutorial Video Script — EXPRESS CUT (~15 minutes)
-## "USGS Earthquakes in Hex: Database → AI App in 15 Minutes"
+## "USGS Earthquakes in Hex: Talk to Your Data, Then Build an App in 15 Minutes"
 **Target runtime:** 14–16 minutes (about half the full script — see `demo_script.md` for the long version)
 **Dataset:** USGS Earthquake data in Supabase Postgres (synced hourly via GitHub Actions)
 **Data connection in Hex:** "Supabase - USGS Earthquakes"
@@ -11,15 +11,35 @@
 ## PRE-RECORDING CHECKLIST
 - [ ] "Supabase - USGS Earthquakes" connection verified
 - [ ] **Cell 0** = `!uv pip install pydeck scikit-learn geopy` — run during setup, then collapse it (uv-based packages; no "add package" button)
-- [ ] **Chat with App** confirmed visible on the published app (interlocking-circles icon, lower-right; needs Explorer role + "Can Explore")
+- [ ] **Chat with App** enabled in the app's settings and re-published, then confirm the interlocking-circles icon shows (lower-right of the published app; needs Explorer role + "Can Explore")
 - [ ] Notifications off, browser at ~125% zoom, no old earthquake project visible
 
 ---
-## 1. Connect + Map — the cold open (0:00–3:00)
+## 1. Threads — talk to your data first (0:00–2:30)
+*Features: Threads · Queue Prompts · Python in Threads*
+
+**[TALKING POINT]**
+> "I've got live USGS earthquake data — magnitude 2.5+, worldwide, refreshed hourly into a Supabase database. Before we build anything, the simplest way to use it in Hex is to just *ask*."
+
+**[ACTION]** Open **Threads**. Type the first, and while it runs, **queue** the second (call out prompt queuing):
+```
+What were the 10 largest earthquakes in the past year? Show location, magnitude, and depth.
+```
+```
+Now show the monthly trend of magnitude 5+ earthquakes — increasing, decreasing, or flat?
+```
+**[ACTION]** Then one more that forces Python:
+```
+Cluster these earthquakes by region with k-means and show the magnitude distribution per cluster.
+```
+> "No project, no code — and it switched from SQL to Python on its own for the clustering. From a bar chart to machine learning, just by asking. Now let me show you what happens when you want to *build* something."
+
+---
+## 2. Connect + Map — into a project (2:30–5:00)
 *Features: SQL Cells + Data Connections · Python Cells (pydeck) · Typeahead*
 
 **[TALKING POINT]**
-> "I've got live USGS earthquake data — magnitude 2.5+, worldwide — landing in a Supabase Postgres database every hour. Let's go from that database to a map in 90 seconds."
+> "Threads is perfect for quick questions. When you want something durable and shareable, you build a project — starting right at the database. Table to map in 90 seconds."
 
 **[ACTION]** New project "Earthquake Explorer". Add a **SQL cell** on the **"Supabase - USGS Earthquakes"** connection. Name its output `earthquakes`:
 ```sql
@@ -64,11 +84,11 @@ deck
 > "The Ring of Fire, on a dark map, sized and colored by magnitude — two cells. Now let's let the AI take over."
 
 ---
-## 2. Notebook Agent — analysis + clustering (3:00–7:00)
+## 3. Notebook Agent — analysis + clustering (5:00–8:30)
 *Features: Notebook Agent (multi-cell generation)*
 
 **[TALKING POINT]**
-> "Instead of writing more code, I'll just describe what I want."
+> "We got a quick clustering answer in Threads — now let's build the polished, reusable version in the project. I'll just describe what I want."
 
 **[ACTION]** Open the Notebook Agent (CMD+K). Paste these **two** prompts (one at a time):
 
@@ -85,7 +105,7 @@ Group the earthquakes into 6 geographic clusters with K-means on their latitude/
 > "Thirty seconds, and it found the planet's tectonic boundaries — clustered, named, mapped, and charted — without me labeling a thing."
 
 ---
-## 3. Build + fix the proximity app (7:00–10:30)
+## 4. Build + fix the proximity app (8:30–11:30)
 *Features: Input Parameters · Notebook Agent · Fix with Agent*
 
 **[TALKING POINT]**
@@ -104,7 +124,7 @@ Build an earthquake proximity finder: (1) a text input `city_name` (default "Sea
 *(If the map shows giant blobs or errors, see the known-good proximity map snippet in `demo_script.md` — the fix is sizing dots in pixels, not meters.)*
 
 ---
-## 4. Publish the app (10:30–11:30)
+## 5. Publish the app (11:30–12:30)
 *Features: Published Apps · Agent configures app layout*
 
 **[ACTION]** App Builder. Either drag cells, or ask the agent:
@@ -115,27 +135,10 @@ Lay out the published app: inputs on top, the proximity map in the center, the n
 > "A live, shareable app — what are the biggest earthquakes near *your* city? No code, no login."
 
 ---
-## 5. Threads — ask, don't build (11:30–13:30)
-*Features: Threads · Queue Prompts · Python in Threads*
-
-**[ACTION]** Open **Threads**. Type the first, and while it runs, **queue** the second (call out prompt queuing):
-```
-What were the 10 largest earthquakes in the past year? Show location, magnitude, and depth.
-```
-```
-Now show the monthly trend of magnitude 5+ earthquakes — increasing, decreasing, or flat?
-```
-**[ACTION]** Then one more that forces Python:
-```
-Cluster these earthquakes by region with k-means and show the magnitude distribution per cluster.
-```
-> "No project, no code — and it switched from SQL to Python on its own for the clustering. Bar chart to machine learning in one conversation."
-
----
-## 6. Chat with App (13:30–15:00)
+## 6. Chat with App (12:30–14:30)
 *Features: Chat with App · Chat with App (expanded context)*
 
-**[ACTION]** Back on the published app, click the **interlocking-circles chat icon (lower-right)**:
+**[ACTION]** On the published app, click the **interlocking-circles chat icon (lower-right)**:
 ```
 Summarize the key findings of this proximity analysis for Seattle.
 ```
@@ -152,15 +155,16 @@ Search my Hex projects for earthquakes, then tell me the 10 largest quakes in th
 > "Same Hex agent, driven from my coding assistant — it streams its thinking and charts right into Claude."
 
 ---
-## 7. Closeout (15:00)
-> "Database to a published, AI-powered app — analysis, clustering, an interactive app, conversational Q&A — in about fifteen minutes. The data's public-domain USGS, refreshed hourly. Hex has a free tier; you can recreate all of it. Thanks for watching."
+## 7. Closeout (14:30–15:00)
+> "In about fifteen minutes we talked to our data in plain English with Threads, then built a project — a live map, named earthquake clusters, and an interactive proximity app — published it, and even chatted with the finished app. The data's public-domain USGS, refreshed hourly. Hex has a free tier; you can recreate all of it. Thanks for watching."
 
 ---
 ## WHAT WAS CUT vs. THE FULL SCRIPT (`demo_script.md`)
 - **Batched agent prompts:** EDA (was 4 prompts → 1), clustering (was 4 → 1), proximity (was 4 → 1). Fewer agent runs = the biggest time savings.
 - **Dropped beats:** histogram bin-size tweak, the April 2 outlier drill-down, the second per-cluster Threads follow-up, and most of the repeated "here's why this is cool" narration.
 - **Trimmed talking points** to one or two lines each.
-- **Kept every feature** on the checklist: SQL + connections, Python/pydeck, Typeahead, Notebook Agent, Input Parameters, Fix with Agent, app layout + Published Apps, Threads (+ queuing + Python), Chat with App (+ expanded context), and the Claude connector as an optional bonus.
+- **Reordered** to open with Threads ("talk to your data") before the project/notebook build.
+- **Kept every feature** on the checklist: Threads (+ queuing + Python), SQL + connections, Python/pydeck, Typeahead, Notebook Agent, Input Parameters, Fix with Agent, app layout + Published Apps, Chat with App (+ expanded context), and the Claude connector as an optional bonus.
 
 ## IF YOU NEED TO GO EVEN SHORTER (~10 min)
-Cut **Fix with Agent** (Step 3) and the **Bonus connector** (Step 6), and trim Threads to the first two prompts.
+Cut **Fix with Agent** (§4) and the **Bonus connector** (§6), and trim the **Threads** opener (§1) to the first two prompts.
