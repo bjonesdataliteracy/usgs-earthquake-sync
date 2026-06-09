@@ -100,10 +100,7 @@ deck
 ```
 Using the `earthquakes` dataframe, create a histogram of earthquake magnitudes with a markdown header above it. What's the distribution?
 ```
-**Prompt 1b — refine the bins**
-```
-Change the binning for magnitude on the x-axis of the histogram to a step size of 0.5.
-```
+**[ACTION — manual chart tweak, NOT an agent prompt]** Once the histogram is built, adjust it by hand: open the chart cell's settings and set the magnitude x-axis **bin size to 0.5**. A nice beat to show you can fine-tune what the agent builds without re-prompting.
 **Prompt 2 — daily time series**
 ```
 Using the `earthquakes` dataframe, create a time series showing daily earthquake counts with a markdown header above it. Are quakes becoming more or less frequent?
@@ -123,6 +120,10 @@ Can you create a map colored by cluster using the pydeck package in Python?
 **Prompt 3c — matching bar chart**
 ```
 Can you now give me a bar chart of earthquake count by cluster group from the `earthquakes` dataframe? Make sure to use the same colors for the bars as you used for the dots on the map.
+```
+**Prompt 3d — name the clusters**
+```
+For each cluster, look at the place names of its earthquakes and give the cluster a short geographic name (like "Pacific Ring of Fire — Japan", "Andes — South America", or "Mediterranean — Greece/Turkey"). Relabel the map legend and the bar chart with these names instead of cluster numbers.
 ```
 **[WAIT — let each prompt finish before pasting the next]**
 **[TALKING POINT — while agent works]**
