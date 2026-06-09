@@ -150,16 +150,20 @@ Can you now give me a bar chart of earthquake count by cluster group from the `e
 
 **Prompt 1 — input parameters**
 ```
-Build the start of an earthquake proximity finder. Create three input parameters: a text input called `city_name` (default "Seattle, WA"), a numeric input called `num_results` (default 25), and a date range input for start and end dates.
+Build the start of an earthquake proximity finder. Create three input parameters: a text input called `city_name` (default "Seattle, WA"), a numeric input called `radius_miles` (default 300), and a date range input for start and end dates.
 ```
 
 **Prompt 2 — geocode + distance**
 ```
-Add a Python cell that uses geopy (already installed) to geocode `city_name` to lat/long, then calculates the geodesic distance from that city to every earthquake in the `earthquakes` dataframe. Return a dataframe called `nearest_quakes` sorted by distance (closest first), limited to the top `num_results`. Include columns: title, magnitude, depth_km, distance_miles, latitude, longitude, event_time, place.
+Add a Python cell that uses geopy (already installed) to geocode `city_name` to lat/long, then calculates the distance in miles from that city to every earthquake in the `earthquakes` dataframe. Keep only the earthquakes within `radius_miles` of the city, and return a dataframe called `nearest_quakes` sorted by distance (closest first). Include columns: title, magnitude, depth_km, distance_miles, latitude, longitude, event_time, place.
 ```
-**Prompt 3 — proximity map**
+**Prompt 3 — proximity map (with radius ring)**
 ```
-Add a pydeck map (dark CARTO basemap, no Mapbox token) centered on the user's city, showing a blue marker for the city and circle markers for each nearby earthquake — sized and colored by magnitude.
+Add a pydeck map (dark CARTO basemap, no Mapbox token) centered on the user's city, with three layers:
+1. A RADIUS RING — draw an actual circle around the city with a geographic radius of `radius_miles`. Use a ScatterplotLayer with a single point at the city, radius_units="meters", and get_radius = radius_miles converted to meters (miles * 1609.34); give it a faint translucent blue fill and a solid 2px blue outline.
+2. The EARTHQUAKES — plot `nearest_quakes` as small circles. Size them in SCREEN PIXELS, not meters: precompute a pixel-radius column (about 4 + 2*magnitude), set radius_units="pixels", radius_min_pixels=3, radius_max_pixels=16. Color by magnitude, ~0.85 opacity, thin white outline, with a hover tooltip (title, magnitude, depth, distance, date).
+3. A CITY MARKER — a small fixed ~7px blue dot for the city itself.
+Set the initial view so the entire radius circle is visible (fit to the city plus radius_miles in every direction). Draw order: ring on the bottom, earthquakes above, city marker on top.
 ```
 **Prompt 4 — results table**
 ```
@@ -195,19 +199,77 @@ a = np.sin(dlat / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
 filtered = filtered.assign(distance_miles=2 * 3958.7613 * np.arcsin(np.sqrt(a)))
 
 nearest_quakes = (
-    filtered.sort_values("distance_miles")
-    .head(int(num_results))
+    filtered[filtered["distance_miles"] <= radius_miles]
+    .sort_values("distance_miles")
     [["title", "magnitude", "depth_km", "distance_miles", "latitude", "longitude", "date", "place"]]
     .reset_index(drop=True)
 )
 nearest_quakes
 ```
 > **⚠️ Column note:** this cell expects a datetime **`date`** column, but the Step 1 SQL outputs `event_time`. Reconcile one of two ways before running: (a) add `event_time as date` to the SQL `select`, or (b) add one prep line first — `earthquakes["date"] = pd.to_datetime(earthquakes["event_time"])`. Without this, the date-range filter throws a `KeyError: 'date'`.
+
+**[KNOWN-GOOD MAP — radius ring + pixel-sized dots]**
+The map is the part the agent most often gets wrong (giant meter-radius blobs). If it does, paste this. The trick: the **ring** is a real circle in *meters* (so it scales with zoom), while the **earthquake dots** are sized in *pixels* (so they stay small at any zoom):
+```python
+import numpy as np
+import pandas as pd
+import pydeck as pdk
+
+city_df = pd.DataFrame([{"lon": city_lon, "lat": city_lat, "name": city_name}])
+
+nq = nearest_quakes.copy()
+nq["radius_px"] = 4 + 2 * nq["magnitude"]            # dot size in PIXELS
+def mag_color(m):
+    if m < 3: return [255, 237, 160, 200]
+    if m < 4: return [254, 178,  76, 210]
+    if m < 5: return [253, 141,  60, 220]
+    if m < 6: return [240,  59,  32, 230]
+    return     [189,   0, 110, 245]
+nq["color"] = nq["magnitude"].apply(mag_color)
+
+ring = pdk.Layer(                                    # 1) real geographic circle (METERS)
+    "ScatterplotLayer", data=city_df, get_position=["lon", "lat"],
+    radius_units="meters", get_radius=radius_miles * 1609.34,
+    filled=True,  get_fill_color=[30, 120, 255, 25],
+    stroked=True, get_line_color=[30, 120, 255, 200], line_width_min_pixels=2,
+)
+quakes = pdk.Layer(                                  # 2) earthquakes (PIXELS)
+    "ScatterplotLayer", data=nq, get_position=["longitude", "latitude"],
+    radius_units="pixels", get_radius="radius_px",
+    radius_min_pixels=3, radius_max_pixels=16,
+    get_fill_color="color", opacity=0.85, stroked=True,
+    get_line_color=[255, 255, 255, 120], line_width_min_pixels=0.5, pickable=True,
+)
+city = pdk.Layer(                                    # 3) blue city marker (PIXELS)
+    "ScatterplotLayer", data=city_df, get_position=["lon", "lat"],
+    radius_units="pixels", get_radius=7, get_fill_color=[30, 120, 255, 255],
+    stroked=True, get_line_color=[255, 255, 255, 255], line_width_min_pixels=1,
+)
+
+# fit the view so the whole ring is visible
+deg = radius_miles / 69.0
+box = pd.DataFrame({
+    "lon": [city_lon - deg / np.cos(np.radians(city_lat)),
+            city_lon + deg / np.cos(np.radians(city_lat))],
+    "lat": [city_lat - deg, city_lat + deg],
+})
+view_state = pdk.data_utils.compute_view(box[["lon", "lat"]])
+view_state.zoom -= 0.3                                # a little padding
+
+tooltip = {"html": "<b>{title}</b><br/>Mag <b>{magnitude}</b> · {depth_km} km deep"
+                   "<br/>{distance_miles} mi away<br/>{place}",
+           "style": {"backgroundColor": "rgba(20,20,20,0.9)", "color": "white",
+                     "fontSize": "12px"}}
+
+deck = pdk.Deck(layers=[ring, quakes, city], initial_view_state=view_state,
+                map_provider="carto", map_style=pdk.map_styles.DARK, tooltip=tooltip)
+deck
+```
 **[AFTER CELLS ARE CREATED, RUN ALL]**
 **[TALKING POINT]**
 > "Let me change the city to somewhere fun..."
-**[ACTION]** Change the city input to "Tokyo, Japan" and re-run. Then try "Los Angeles, CA".
-> "Every time I change the city, the whole notebook reruns — fresh geocoding, new distances, a recentered map. This is already a working application. But right now only I can see it."
+**[ACTION]** Change the city input to "Tokyo, Japan" and re-run. Then try "Los Angeles, CA". Also drag the `radius_miles` input — try 100, then 500 — and watch the ring resize and the results update.
+> "Every time I change the city or the radius, the whole notebook reruns — fresh geocoding, new distances, a recentered map with the circle redrawn. This is already a working application. But right now only I can see it."
 ---
 ### Step 6: Quick Fix with Agent (15:00–16:30)
 **[TALKING POINT]**
@@ -231,14 +293,14 @@ Turn my notebook into a nice Earthquake Proximity Finder - user enters a city, r
 **[TALKING POINT]**
 > "In the app view, I drag cells into a layout. Inputs at the top, the map front and center, the data table below."
 **[ACTION]** Arrange the layout:
-- Top row: city_name input, num_results slider, date range
+- Top row: city_name input, radius_miles slider, date range
 - Center: the pydeck proximity map (make it large)
 - Bottom: the nearest_quakes table
 - Optionally: also include the cluster-colored map from Step 3 as a second "global view" tab
 **[ALTERNATIVELY — use the Notebook Agent]**
 **[PROMPT FOR NOTEBOOK AGENT]**
 ```
-Add the city_name input, num_results input, date range inputs, the earthquake proximity map, and the nearest_quakes table to the published app. Inputs at the top, map prominently in the center, table below.
+Add the city_name input, radius_miles input, date range inputs, the earthquake proximity map, and the nearest_quakes table to the published app. Inputs at the top, map prominently in the center, table below.
 ```
 **[TALKING POINT]**
 > "I can drag and drop manually, or I can ask the agent to configure the app layout for me."
