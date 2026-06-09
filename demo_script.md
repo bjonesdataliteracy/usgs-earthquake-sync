@@ -157,13 +157,9 @@ Build the start of an earthquake proximity finder. Create three input parameters
 ```
 Add a Python cell that uses geopy (already installed) to geocode `city_name` to lat/long, then calculates the distance in miles from that city to every earthquake in the `earthquakes` dataframe. Keep only the earthquakes within `radius_miles` of the city, and return a dataframe called `nearest_quakes` sorted by distance (closest first). Include columns: title, magnitude, depth_km, distance_miles, latitude, longitude, event_time, place.
 ```
-**Prompt 3 — proximity map (with radius ring)**
+**Prompt 3 — proximity map**
 ```
-Add a pydeck map (dark CARTO basemap, no Mapbox token) centered on the user's city, with three layers:
-1. A RADIUS RING — draw an actual circle around the city with a geographic radius of `radius_miles`. Use a ScatterplotLayer with a single point at the city, radius_units="meters", and get_radius = radius_miles converted to meters (miles * 1609.34); give it a faint translucent blue fill and a solid 2px blue outline.
-2. The EARTHQUAKES — plot `nearest_quakes` as small circles. Size them in SCREEN PIXELS, not meters: precompute a pixel-radius column (about 4 + 2*magnitude), set radius_units="pixels", radius_min_pixels=3, radius_max_pixels=16. Color by magnitude, ~0.85 opacity, thin white outline, with a hover tooltip (title, magnitude, depth, distance, date).
-3. A CITY MARKER — a small fixed ~7px blue dot for the city itself.
-Set the initial view so the entire radius circle is visible (fit to the city plus radius_miles in every direction). Draw order: ring on the bottom, earthquakes above, city marker on top.
+Add a pydeck map on a dark CARTO basemap with place labels, centered on `city_name`, with a blue dot for the city and the `nearest_quakes` as small pixel-sized circles colored by magnitude and a hover tooltip (title, magnitude, depth, distance, date).
 ```
 **Prompt 4 — results table**
 ```
@@ -208,8 +204,8 @@ nearest_quakes
 ```
 > **⚠️ Column note:** this cell expects a datetime **`date`** column, but the Step 1 SQL outputs `event_time`. Reconcile one of two ways before running: (a) add `event_time as date` to the SQL `select`, or (b) add one prep line first — `earthquakes["date"] = pd.to_datetime(earthquakes["event_time"])`. Without this, the date-range filter throws a `KeyError: 'date'`.
 
-**[KNOWN-GOOD MAP — radius ring + pixel-sized dots]**
-The map is the part the agent most often gets wrong (giant meter-radius blobs). If it does, paste this. The trick: the **ring** is a real circle in *meters* (so it scales with zoom), while the **earthquake dots** are sized in *pixels* (so they stay small at any zoom):
+**[KNOWN-GOOD MAP — pixel-sized dots]**
+The map is the part the agent most often gets wrong (giant meter-radius blobs). If it does, paste this — the fix is sizing the earthquake dots in *pixels* (not meters) so they stay small at any zoom. The dark CARTO basemap (`pdk.map_styles.DARK`) already includes place labels:
 ```python
 import numpy as np
 import pandas as pd
@@ -227,26 +223,20 @@ def mag_color(m):
     return     [189,   0, 110, 245]
 nq["color"] = nq["magnitude"].apply(mag_color)
 
-ring = pdk.Layer(                                    # 1) real geographic circle (METERS)
-    "ScatterplotLayer", data=city_df, get_position=["lon", "lat"],
-    radius_units="meters", get_radius=radius_miles * 1609.34,
-    filled=True,  get_fill_color=[30, 120, 255, 25],
-    stroked=True, get_line_color=[30, 120, 255, 200], line_width_min_pixels=2,
-)
-quakes = pdk.Layer(                                  # 2) earthquakes (PIXELS)
+quakes = pdk.Layer(                                  # earthquakes sized in PIXELS
     "ScatterplotLayer", data=nq, get_position=["longitude", "latitude"],
     radius_units="pixels", get_radius="radius_px",
     radius_min_pixels=3, radius_max_pixels=16,
     get_fill_color="color", opacity=0.85, stroked=True,
     get_line_color=[255, 255, 255, 120], line_width_min_pixels=0.5, pickable=True,
 )
-city = pdk.Layer(                                    # 3) blue city marker (PIXELS)
+city = pdk.Layer(                                    # blue city marker (PIXELS)
     "ScatterplotLayer", data=city_df, get_position=["lon", "lat"],
     radius_units="pixels", get_radius=7, get_fill_color=[30, 120, 255, 255],
     stroked=True, get_line_color=[255, 255, 255, 255], line_width_min_pixels=1,
 )
 
-# fit the view so the whole ring is visible
+# fit the view to the search area
 deg = radius_miles / 69.0
 box = pd.DataFrame({
     "lon": [city_lon - deg / np.cos(np.radians(city_lat)),
@@ -261,15 +251,15 @@ tooltip = {"html": "<b>{title}</b><br/>Mag <b>{magnitude}</b> · {depth_km} km d
            "style": {"backgroundColor": "rgba(20,20,20,0.9)", "color": "white",
                      "fontSize": "12px"}}
 
-deck = pdk.Deck(layers=[ring, quakes, city], initial_view_state=view_state,
+deck = pdk.Deck(layers=[quakes, city], initial_view_state=view_state,
                 map_provider="carto", map_style=pdk.map_styles.DARK, tooltip=tooltip)
 deck
 ```
 **[AFTER CELLS ARE CREATED, RUN ALL]**
 **[TALKING POINT]**
 > "Let me change the city to somewhere fun..."
-**[ACTION]** Change the city input to "Tokyo, Japan" and re-run. Then try "Los Angeles, CA". Also drag the `radius_miles` input — try 100, then 500 — and watch the ring resize and the results update.
-> "Every time I change the city or the radius, the whole notebook reruns — fresh geocoding, new distances, a recentered map with the circle redrawn. This is already a working application. But right now only I can see it."
+**[ACTION]** Change the city input to "Tokyo, Japan" and re-run. Then try "Los Angeles, CA". Also drag the `radius_miles` input — try 100, then 500 — and watch the results update.
+> "Every time I change the city or the radius, the whole notebook reruns — fresh geocoding, new distances, a recentered map. This is already a working application. But right now only I can see it."
 ---
 ### Step 6: Quick Fix with Agent (15:00–16:30)
 **[TALKING POINT]**
