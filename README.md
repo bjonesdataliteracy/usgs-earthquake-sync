@@ -30,6 +30,20 @@ without manual intervention.
 | `requirements.txt` | Python dependencies (`requests`, `supabase`) |
 | `.github/workflows/sync.yml` | Hourly GitHub Actions workflow |
 | `demo_script.md` | Hex tutorial video script — builds a live earthquake app (SQL → pydeck map → AI agent → published app) on this data |
+| `earthquake_analysis_2026.ipynb` | Full guided analysis of 2026 seismicity for non-experts (executed, offline-reproducible) |
+| `data/earthquakes_2026.csv` | Snapshot of all M2.5+ events, Jan 1 2026 → present, used by the notebook |
+| `snapshot_2026.py` | Refreshes the snapshot CSV from the USGS API |
+| `.github/workflows/snapshot.yml` | On-demand workflow that runs `snapshot_2026.py` and commits the refreshed CSV |
+
+## 2026 analysis notebook
+
+`earthquake_analysis_2026.ipynb` is a narrative walkthrough of everything the
+catalog says about 2026 so far — headline events (the June 24 Venezuela doublet,
+the M7.8 Philippines quake), aftershock physics, magnitude-vs-impact, U.S.
+activity, and whether the year is statistically unusual (it isn't). It runs
+entirely from `data/earthquakes_2026.csv` with pandas + matplotlib — no network
+or credentials needed. To refresh the data first, run `python snapshot_2026.py`
+(or trigger the **Snapshot 2026 Data** workflow), then re-run the notebook.
 
 ## Setup
 
