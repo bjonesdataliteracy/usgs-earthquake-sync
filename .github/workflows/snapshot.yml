@@ -5,6 +5,12 @@ name: Snapshot 2026 Data
 # the branch the workflow was run on.
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - claude/usgs-earthquake-analysis-tetzuj
+    paths:
+      - .github/workflows/snapshot.yml
+      - snapshot_2026.py
 
 permissions:
   contents: write
