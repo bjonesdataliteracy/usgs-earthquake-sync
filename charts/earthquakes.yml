@@ -1,3 +1,4 @@
+_schema_version: "0.11.0"  # written automatically by dct migrate
 title: "Earthquakes: the last 30 days"
 source: supabase
 
@@ -102,8 +103,8 @@ charts:
     projection: equalEarth
     basemap:
       source: world-countries
-      fill: dbt-grays.surface-subtle
-      stroke: dbt-grays.border
+      fill: "dbt-grays.2"
+      stroke: "dbt-grays.4"
 
   strongest_table:
     type: table
@@ -112,10 +113,7 @@ charts:
     style:
       columns:
         magnitude:
-          label: Magnitude
           format: ".1f"
-        depth_km:
-          label: "Depth (km)"
 
 rows:
   - cols: [total_kpi, significant_kpi, strongest_kpi]
