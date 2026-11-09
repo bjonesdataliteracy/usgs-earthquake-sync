@@ -137,7 +137,6 @@ charts:
     color: magnitude_band
     style:
       legend:
-        direction: horizontal
         position:
           edge: top
           align: center
