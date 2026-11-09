@@ -3,6 +3,12 @@ title: "Earthquakes: the last 30 days"
 source: supabase
 style:
   charts:
+    category_colors:
+      magnitude_band:
+        values:
+          "2.5 to 4.5": "#440154"
+          "4.5 to 6": "#21918C"
+          "6+": "#FDE725"
     kpi:
       background: "dbt-grays.1"
       border:
