@@ -121,6 +121,7 @@ charts:
     type: bar
     query: daily_by_band
     title: "Earthquakes per day, by magnitude"
+    height: 320
     x: day
     y: quakes
     color: magnitude_band
@@ -131,8 +132,15 @@ charts:
     type: pie
     query: magnitude_totals
     title: "Total earthquakes by magnitude group"
+    height: 320
     theta: quakes
     color: magnitude_band
+    style:
+      legend:
+        direction: horizontal
+        position:
+          edge: top
+          align: center
 
   quake_map:
     type: bubble_map
