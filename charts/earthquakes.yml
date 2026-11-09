@@ -1,7 +1,11 @@
 _schema_version: "0.11.0"  # written automatically by dct migrate
-title: "Earthquakes: the last 30 days"
+title: "Earthquakes 2.5+: the Last 30 Days"
 source: supabase
 style:
+  title:
+    font:
+      size: 36
+      weight: bold
   charts:
     category_colors:
       magnitude_band:
