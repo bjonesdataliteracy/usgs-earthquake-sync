@@ -103,8 +103,13 @@ charts:
     projection: equalEarth
     basemap:
       source: world-countries
-      fill: "dbt-grays.2"
+      fill: "dbt-grays.1"
       stroke: "dbt-grays.4"
+    style:
+      marks:
+        point:
+          size: 16
+          opacity: 0.4
 
   strongest_table:
     type: table
