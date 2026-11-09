@@ -51,6 +51,13 @@ queries:
       group by 1, 2
       order by 1, 2
 
+  magnitude_totals:
+    sql: |
+      select magnitude_band, sum(quakes) as quakes
+      from {{ queries.daily_by_band }}
+      group by magnitude_band
+      order by magnitude_band
+
   significant_locations:
     sql: |
       select latitude, longitude, magnitude, place
@@ -109,6 +116,13 @@ charts:
     style:
       stack: zero
 
+  magnitude_pie:
+    type: pie
+    query: magnitude_totals
+    title: "Total earthquakes by magnitude group"
+    theta: quakes
+    color: magnitude_band
+
   quake_map:
     type: bubble_map
     query: significant_locations
@@ -138,5 +152,5 @@ charts:
 
 rows:
   - cols: [total_kpi, significant_kpi, strongest_kpi]
-  - daily_trend
+  - cols: [magnitude_pie, daily_trend]
   - cols: [quake_map, strongest_table]
