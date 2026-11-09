@@ -7,6 +7,9 @@ style:
       size: 36
       weight: bold
   charts:
+    title:
+      font:
+        size: 18
     category_colors:
       magnitude_band:
         values:
