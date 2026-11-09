@@ -66,7 +66,12 @@ queries:
 
   significant_locations:
     sql: |
-      select latitude, longitude, magnitude, place
+      select latitude, longitude, magnitude, place,
+        case
+          when magnitude >= 6   then '6+'
+          when magnitude >= 4.5 then '4.5 to 6'
+          else '2.5 to 4.5'
+        end as magnitude_band
       from earthquakes
       where event_time >= (select date_trunc('day', max(event_time)) from earthquakes) - interval '29 days'
         and magnitude >= 4.5
@@ -136,6 +141,7 @@ charts:
     latitude: latitude
     longitude: longitude
     size: magnitude
+    color: magnitude_band
     projection: equalEarth
     basemap:
       source: world-countries
@@ -151,6 +157,18 @@ charts:
     type: table
     query: strongest
     title: "The 10 strongest"
+    conditional_formatting:
+      magnitude:
+        when:
+          - gte: 6
+            glyph: "●"
+            glyph_color: "#FDE725"
+          - gte: 4.5
+            glyph: "●"
+            glyph_color: "#21918C"
+          - default: true
+            glyph: "●"
+            glyph_color: "#440154"
     style:
       columns:
         magnitude:
