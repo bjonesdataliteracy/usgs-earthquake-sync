@@ -1,6 +1,6 @@
 # usgs-earthquake-sync
 
-Hourly data pipeline that pulls live [USGS earthquake data](https://earthquake.usgs.gov/fdsnws/event/1/)
+Weekly data pipeline that pulls live [USGS earthquake data](https://earthquake.usgs.gov/fdsnws/event/1/)
 into a [Supabase](https://supabase.com) Postgres database via GitHub Actions.
 
 Built to power live-data demos (e.g. analytics walkthroughs in
@@ -9,8 +9,8 @@ without manual intervention.
 
 ## How it works
 
-1. A GitHub Actions workflow (`.github/workflows/sync.yml`) runs every hour on a
-   cron schedule (and can be triggered manually via **workflow_dispatch**).
+1. A GitHub Actions workflow (`.github/workflows/sync.yml`) runs once a week
+   (Mondays, 06:17 UTC) on a cron schedule (and can be triggered manually via **workflow_dispatch**).
 2. `sync_earthquakes.py` queries the USGS FDSN event API for the **last 30 days**
    of earthquakes with **magnitude ≥ 2.5** (GeoJSON, up to 20,000 events).
 3. Each GeoJSON feature is flattened into a row. Epoch-millisecond timestamps
@@ -28,7 +28,7 @@ without manual intervention.
 | `create_table.sql` | Table definition + indexes for the `earthquakes` table |
 | `sync_earthquakes.py` | Fetch → transform → upsert script |
 | `requirements.txt` | Python dependencies (`requests`, `supabase`) |
-| `.github/workflows/sync.yml` | Hourly GitHub Actions workflow |
+| `.github/workflows/sync.yml` | Weekly GitHub Actions workflow |
 | `demo_script.md` | Hex tutorial video script — builds a live earthquake app (SQL → pydeck map → AI agent → published app) on this data |
 
 ## Setup
@@ -53,7 +53,7 @@ only ever stored as a GitHub Actions secret — never commit it to the repo.
 ### 3. Run it
 
 Trigger the workflow manually from the **Actions** tab (**Run workflow**), or wait
-for the next hourly run. To run locally instead:
+for the next weekly run. To run locally instead:
 
 ```bash
 pip install -r requirements.txt

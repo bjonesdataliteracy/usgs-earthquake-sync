@@ -2,8 +2,9 @@ name: Sync USGS Earthquakes
 
 on:
   schedule:
-    # Top of every hour (UTC).
-    - cron: "0 * * * *"
+    # Weekly, Mondays at 06:17 UTC. Each run re-pulls the last 30 days, so a
+    # weekly cadence still captures every event and any revisions.
+    - cron: "17 6 * * 1"
   workflow_dispatch:
 
 jobs:
