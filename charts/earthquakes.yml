@@ -1,6 +1,18 @@
 _schema_version: "0.11.0"  # written automatically by dct migrate
 title: "Earthquakes: the last 30 days"
 source: supabase
+style:
+  charts:
+    kpi:
+      background: "dbt-grays.1"
+      border:
+        width: 1
+        color: "dbt-grays.3"
+        radius: 8
+      default_height: 150
+      value:
+        font:
+          size: 48
 
 # Every query covers the 30 calendar days ending on the day of the most
 # recent event in the table, so the board still shows data if the sync
@@ -60,7 +72,7 @@ charts:
     type: kpi
     query: summary
     value: total_quakes
-    label: "Earthquakes recorded"
+    label: "Magnitude 2.5+ earthquakes recorded"
     style:
       value:
         format: ",.0f"
@@ -78,7 +90,7 @@ charts:
     type: kpi
     query: summary
     value: strongest_magnitude
-    label: "Strongest magnitude"
+    label: "Strongest magnitude (M2.5+ events)"
     style:
       value:
         format: ".1f"
