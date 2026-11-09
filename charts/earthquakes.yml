@@ -22,7 +22,7 @@ style:
         width: 1
         color: "dbt-grays.3"
         radius: 8
-      default_height: 120
+      default_height: 100
       align: center
       content_padding:
         top: 12
